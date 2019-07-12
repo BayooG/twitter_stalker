@@ -8,18 +8,41 @@ class Stalker():
 
         self.api = tweepy.API(self.auth)
     
-    def stalk(self, count, username = None, url = None):
-        tweets = []
+    def stalk(self, count, username = None, url = None, typ = 'all' ):
+        all_tweets       = []
+        personal_tweets  = []
+        retweeted_tweets = []
         if username:
-            self.handler = username
+            self.set_target(username)
         elif url:
-            self.handler = url.split('/')[3]
-        else:
+            self.set_target(url.split('/')[3])
+        
+        if self.handler is None:
             return  None
+        
         self.user = self.api.get_user(self.handler)
         for item in tweepy.Cursor(self.api.user_timeline, screen_name=self.handler, include_entities=True).items(count) :
-            tweets.append('twitter.com/{}/status/{}'.format(self.handler,item.id))
+            all_tweets.append('twitter.com/{}/status/{}'.format(self.handler,item.id))   
+            
+            if item.retweeted:
+                retweeted_tweets.append('twitter.com/{}/status/{}'.format(self.handler,item.id))
+            
+            else:
+                personal_tweets.append('twitter.com/{}/status/{}'.format(self.handler,item.id))
         
+        if typ == 'all':
+            tweets = all_tweets
+        elif typ == 'personal':
+            tweets = personal_tweets
+        elif typ == 'retweeted':
+            tweets = retweeted_tweets
+        else:
+            return  []
         return tweets
+    
+    def set_target(self, target):
+        self.handler = target
         
-        
+    @property
+    def get_target(self):
+        return  self.handler
